@@ -1,0 +1,22 @@
+{
+    "name": "centamiv/microblo",
+    "description": "A lightweight flat-file blog engine.",
+    "type": "project",
+    "license": "MIT",
+    "version": "1.0.0",
+    "authors": [
+        {
+            "name": "Ivan Centamori",
+            "email": "centamori@gmail.com"
+        }
+    ],
+    "autoload": {
+        "classmap": [
+            "public/microblo/"
+        ]
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0",
+        "friendsofphp/php-cs-fixer": "^3.92"
+    }
+}
