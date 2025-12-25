@@ -1,5 +1,7 @@
 <?php
 
+define('MICROBLO_ADMIN', true);
+
 require __DIR__ . '/microblo/Parsedown.php';
 require __DIR__ . '/microblo/PostParser.php';
 require __DIR__ . '/microblo/Cache.php';

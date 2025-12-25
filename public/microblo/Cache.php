@@ -1,4 +1,5 @@
 <?php
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
 
 class Cache
 {

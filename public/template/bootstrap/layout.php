@@ -1,3 +1,4 @@
+<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
 <!DOCTYPE html>
 <html lang="<?= mb_current_language() ?>">
 

@@ -1,4 +1,5 @@
 <?php
+if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
 
 class AdminController
 {
@@ -308,6 +309,6 @@ class AdminController
     private function renderView(string $view, array $data = []): void
     {
         extract($data);
-        require __DIR__ . "/admin/$view.php";
+        require __DIR__ . "/../template/admin/$view.php";
     }
 }

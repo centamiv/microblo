@@ -1,10 +1,11 @@
+<?php if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; } ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <title>Images - Microblo</title>
-    <link rel="stylesheet" href="microblo/admin/css/terminal.css">
+    <link rel="stylesheet" href="template/admin/css/terminal.css">
     <style>
         .image-grid {
             display: grid;

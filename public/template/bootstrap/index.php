@@ -1,3 +1,4 @@
+<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
 <div class="row">
     <div class="col-lg-8">
         <?php if (mb_site_description()): ?>

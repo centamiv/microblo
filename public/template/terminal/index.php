@@ -1,3 +1,4 @@
+<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
 <?php if (mb_site_description()): ?>
     <p>
         <?= mb_site_description() ?>

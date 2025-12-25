@@ -1,10 +1,11 @@
+<?php if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; } ?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <title>Dashboard - Microblo</title>
-    <link rel="stylesheet" href="microblo/admin/css/terminal.css">
+    <link rel="stylesheet" href="template/admin/css/terminal.css">
 </head>
 
 <body style="padding: 20px; max-width: 1024px; margin: 0 auto;">

@@ -1,3 +1,4 @@
+<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
 <article class="post-single">
     <?= mb_post_content() ?>
 </article>
