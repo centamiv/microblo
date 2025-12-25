@@ -27,3 +27,5 @@ composer.phar
 
 /public/content/posts/*
 !/public/content/posts/.gitkeep
+
+config.php

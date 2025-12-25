@@ -19,21 +19,7 @@ Ensure your web server has **write permissions** for the following directories:
 
 ## Configuration
 
-Edit `config.php` to customize your site:
-
-```php
-return [
-    'site_name' => 'My Old School Blog',
-    'site_description' => 'Simplicity is the ultimate sophistication.',
-    
-    // Security: CHANGE THESE IMMEDIATELY
-    'admin_user' => 'admin',
-    'admin_pass' => 'password', 
-    
-    // Theme: 'terminal' or 'bootstrap'
-    'theme_name' => 'terminal', 
-];
-```
+Rename `config.default.php` to `config.php` and edit it to customize your site.
 
 ## Usage
 

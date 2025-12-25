@@ -21,6 +21,26 @@ function mb_site_description(): string
 }
 
 /**
+ * Get external links from configuration.
+ *
+ * @return array
+ */
+function mb_external_links(): array
+{
+    return Microblo::instance()->getConfig('external_links') ?? [];
+}
+
+/**
+ * Get analytics ID from configuration.
+ *
+ * @return string
+ */
+function mb_analytics_id(): string
+{
+    return Microblo::instance()->getConfig('analytics_id') ?? '';
+}
+
+/**
  * Get list of supported languages.
  *
  * @return array

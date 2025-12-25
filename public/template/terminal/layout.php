@@ -49,7 +49,9 @@
             <?php endforeach; ?>
         </nav>
         <nav>
-            <a href="https://github.com/centamiv" target="_blank">GitHub</a>
+            <?php foreach (mb_external_links() as $name => $url): ?>
+                <a href="<?= htmlspecialchars($url) ?>" target="_blank"><?= htmlspecialchars($name) ?></a>
+            <?php endforeach; ?>
         </nav>
     </header>
 
@@ -65,6 +67,20 @@
         <p>&copy; <?= date('Y') ?> <?= mb_site_name() ?></p>
         <p>Made with <a href="https://github.com/centamiv/microblo" target="_blank">Microblo</a></p>
     </footer>
+
+    <?php if ($analytics_id = mb_analytics_id()): ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= mb_analytics_id() ?>"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+
+            gtag('config', '<?= mb_analytics_id() ?>');
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>

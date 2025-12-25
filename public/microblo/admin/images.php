@@ -32,6 +32,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 0.8em;
+            align-items: baseline;
         }
     </style>
 </head>

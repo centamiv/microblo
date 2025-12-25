@@ -42,7 +42,9 @@
                         </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="https://github.com/centamiv" target="_blank">GitHub</a>
+                        <?php foreach (mb_external_links() as $name => $url): ?>
+                            <a class="nav-link" href="<?= htmlspecialchars($url) ?>" target="_blank"><?= htmlspecialchars($name) ?></a>
+                        <?php endforeach; ?>
                     </li>
                 </ul>
             </div>
@@ -62,6 +64,17 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    
+    <?php if ($analytics_id = mb_analytics_id()): ?>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=<?= mb_analytics_id() ?>"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', '<?= mb_analytics_id() ?>');
+        </script>
+    <?php endif; ?>
 </body>
 
 </html>
