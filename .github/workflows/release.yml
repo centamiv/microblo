@@ -1,0 +1,39 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from composer.json
+        id: get_version
+        run: |
+          VERSION=$(jq -r .version composer.json)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Get current timestamp
+        id: get_timestamp
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+      - name: Create ZIP archive
+        run: |
+          zip -r microblo-${{ env.VERSION }}-${{ env.TIMESTAMP }}.zip public/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.VERSION }}-${{ env.TIMESTAMP }}
+          name: Release ${{ env.VERSION }} (${{ env.TIMESTAMP }})
+          files: microblo-${{ env.VERSION }}-${{ env.TIMESTAMP }}.zip
+          draft: false
+          prerelease: false

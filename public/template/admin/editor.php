@@ -1,4 +1,7 @@
-<?php if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; } ?>
+<?php if (!defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+} ?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -76,7 +79,7 @@
             <?php foreach ($languages as $i => $lang): ?>
                 <div id="tab-<?= $lang ?>" class="tab <?= $i === 0 ? 'active' : '' ?>">
                     <label>Content (Markdown):
-                        <div class="editor-<?= $lang ?>" style="height: 500px; border: 1px solid var(--foreground);"></div>
+                        <textarea name="content[<?= $lang ?>]" style="width: 100%; height: 500px; border: 1px solid var(--foreground);"><?= htmlspecialchars($content[$lang]) ?></textarea>
                     </label>
                 </div>
             <?php endforeach; ?>
@@ -86,20 +89,6 @@
             <a href="admin.php" class="btn btn-default">Cancel</a>
         </div>
     </form>
-    <script src="https://unpkg.com/overtype/dist/overtype.min.js"></script>
-    <?php foreach ($languages as $i => $lang): ?>
-        <script>
-            const editor_<?= $lang ?> = new OverType(".editor-<?= $lang ?>", {
-                placeholder: '',
-                theme: 'cave',
-                toolbar: true,
-                textareaProps: {
-                    name: 'content[<?= $lang ?>]'
-                }
-            });
-            editor_<?= $lang ?>[0].setValue(`<?= htmlspecialchars($content[$lang]) ?>`);
-        </script>
-    <?php endforeach; ?>
     <script>
         function openTab(lang) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
