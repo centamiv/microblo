@@ -8,7 +8,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="<?= mb_meta_description() ?>">
+    <?php if (mb_meta_description()): ?>
+        <meta name="description" content="<?= mb_meta_description() ?>">
+    <?php endif; ?>
     <title><?= mb_site_name() ?></title>
     <link rel="stylesheet" href="template/terminal/css/terminal.css">
     <style>
