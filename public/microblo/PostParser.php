@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 class PostParser
 {
@@ -18,6 +21,7 @@ class PostParser
         $content = file_get_contents($filePath);
         $title = null;
         $body = $content;
+        $metaDescription = '';
 
         // Extract Front Matter
         $pattern = '/^---\s*\n(.*?)\n---\s*\n(.*)$/s';
@@ -25,8 +29,8 @@ class PostParser
             $frontMatterRaw = $matches[1];
             $body = $matches[2];
             $meta = $this->parseYamlSimple($frontMatterRaw);
-            if (!empty($meta['title'])) {
-                $title = $meta['title'];
+            if (!empty($meta['description'])) {
+                $metaDescription = $meta['description'];
             }
         }
 
@@ -36,14 +40,12 @@ class PostParser
         $Parsedown = new \Parsedown();
         $htmlContent = $Parsedown->text($body);
 
-        // Fallback: Use H1 from content as title
-        if (!$title) {
-            if (preg_match('/<h1>(.*?)<\/h1>/i', $htmlContent, $h1Matches)) {
-                $title = strip_tags($h1Matches[1]);
-            }
+        // Use H1 from content as title
+        if (preg_match('/<h1>(.*?)<\/h1>/i', $htmlContent, $h1Matches)) {
+            $title = strip_tags($h1Matches[1]);
         }
 
-        // Fallback: Generate title and date from filename
+        // Generate date from filename, also generate title as fallback
         $basename = basename($filePath, '.md');
         $date = null;
 
@@ -66,7 +68,8 @@ class PostParser
             'title' => $title,
             'content' => $htmlContent,
             'markdown' => $body,
-            'date' => $date
+            'date' => $date,
+            'metaDescription' => $metaDescription
         ];
     }
 
