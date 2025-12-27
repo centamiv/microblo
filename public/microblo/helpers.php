@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 /**
  * Get the site name from configuration.
@@ -9,6 +12,18 @@ if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code
 function mb_site_name(): string
 {
     return Microblo::instance()->getConfig('site_name') ?? '';
+}
+
+/**
+ * Get meta description for the current page.
+ *
+ * @param array|null $post Post data or null for current item.
+ * @return string
+ */
+function mb_meta_description(?array $post = null): string
+{
+    $post = $post ?? Microblo::instance()->getCurrentItem();
+    return htmlspecialchars($post['metaDescription'] ?? '');
 }
 
 /**

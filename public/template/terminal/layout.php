@@ -1,10 +1,14 @@
-<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
+<?php if (!defined('MICROBLO_APP')) {
+    http_response_code(403);
+    exit;
+} ?>
 <!DOCTYPE html>
 <html lang="<?= mb_current_language() ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="<?= mb_meta_description() ?>">
     <title><?= mb_site_name() ?></title>
     <link rel="stylesheet" href="template/terminal/css/terminal.css">
     <style>

@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 class AdminController
 {
@@ -100,11 +103,13 @@ class AdminController
         $slug = $_GET['slug'] ?? null;
         $date = date('Y-m-d');
         $content = [];
+        $metaDescription = [];
 
         $languages = $this->config['supported_languages'] ?? ['en'];
 
         foreach ($languages as $lang) {
             $content[$lang] = '';
+            $metaDescription[$lang] = '';
 
             if ($slug) {
                 $file = $this->findFile($type, $slug, $lang);
@@ -113,6 +118,7 @@ class AdminController
 
                     $content[$lang] = $parsed['markdown'];
                     $date = $parsed['date'];
+                    $metaDescription[$lang] = $parsed['metaDescription'];
                 }
             }
         }
@@ -122,7 +128,8 @@ class AdminController
             'slug' => $slug,
             'date' => $date,
             'content' => $content,
-            'languages' => $languages
+            'languages' => $languages,
+            'metaDescription' => $metaDescription
         ]);
     }
 
@@ -161,10 +168,18 @@ class AdminController
 
 
             $content = $_POST["content"][$lang] ?? '';
+            $metaDescription = $_POST["metaDescription"][$lang] ?? '';
 
             if (empty($content)) {
                 continue;
             };
+
+            if (!empty($metaDescription)) {
+                $frontMatter = "---\n";
+                $frontMatter .= "description: $metaDescription\n";
+                $frontMatter .= "---\n";
+                $content = $frontMatter . $content;
+            }
 
             file_put_contents($filename, $content);
         }

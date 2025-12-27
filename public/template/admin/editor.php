@@ -78,11 +78,16 @@
 
             <?php foreach ($languages as $i => $lang): ?>
                 <div id="tab-<?= $lang ?>" class="tab <?= $i === 0 ? 'active' : '' ?>">
-                    <label>Content (Markdown):
+                    <label>Content Markdown [<?= $lang ?>]:
                         <textarea name="content[<?= $lang ?>]" style="width: 100%; height: 500px; border: 1px solid var(--foreground);"><?= htmlspecialchars($content[$lang]) ?></textarea>
+                    </label>
+
+                    <label>
+                        Meta Description [<?= $lang ?>]: <input type="text" name="metaDescription[<?= $lang ?>]" value="<?= htmlspecialchars($metaDescription[$lang]) ?>">
                     </label>
                 </div>
             <?php endforeach; ?>
+
         </fieldset>
         <div class="actions">
             <button type="submit" class="btn btn-primary">Save Changes</button>
