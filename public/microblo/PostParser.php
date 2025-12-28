@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
     http_response_code(403);
     exit;
@@ -34,14 +35,27 @@ class PostParser
             }
         }
 
-        if (!class_exists('Parsedown')) {
+        if (!class_exists('ParsedownExtended')) {
             require_once __DIR__ . '/Parsedown.php';
+            require_once __DIR__ . '/ParsedownExtended.php';
         }
-        $Parsedown = new \Parsedown();
+        $Parsedown = new \ParsedownExtended();
+        $Parsedown->config()->set('math', [
+            'inline' => [
+                'delimiters' => [
+                    ['left' => '$', 'right' => '$'],
+                ],
+            ],
+            'block' => [
+                'delimiters' => [
+                    ['left' => '$$', 'right' => '$$'],
+                ],
+            ],
+        ]);
         $htmlContent = $Parsedown->text($body);
 
         // Use H1 from content as title
-        if (preg_match('/<h1>(.*?)<\/h1>/i', $htmlContent, $h1Matches)) {
+        if (preg_match('/<h1[^>]*>(.*?)<\/h1>/i', $htmlContent, $h1Matches)) {
             $title = strip_tags($h1Matches[1]);
         }
 
