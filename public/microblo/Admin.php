@@ -18,8 +18,8 @@ class AdminController
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->pathContent = __DIR__ . '/../content';
-        $this->pathCache = __DIR__ . '/../cache';
+        $this->pathContent = $config['path_content'] ?? __DIR__ . '/../content';
+        $this->pathCache = $config['path_cache'] ?? __DIR__ . '/../cache';
     }
 
     /**
@@ -105,11 +105,14 @@ class AdminController
         $content = [];
         $metaDescription = [];
 
+        $hidden = [];
+
         $languages = $this->config['supported_languages'] ?? ['en'];
 
         foreach ($languages as $lang) {
             $content[$lang] = '';
             $metaDescription[$lang] = '';
+            $hidden[$lang] = false;
 
             if ($slug) {
                 $file = $this->findFile($type, $slug, $lang);
@@ -119,6 +122,7 @@ class AdminController
                     $content[$lang] = $parsed['markdown'];
                     $date = $parsed['date'];
                     $metaDescription[$lang] = $parsed['metaDescription'];
+                    $hidden[$lang] = $parsed['hidden'] ?? false;
                 }
             }
         }
@@ -129,7 +133,8 @@ class AdminController
             'date' => $date,
             'content' => $content,
             'languages' => $languages,
-            'metaDescription' => $metaDescription
+            'metaDescription' => $metaDescription,
+            'hidden' => $hidden
         ]);
     }
 
@@ -169,15 +174,38 @@ class AdminController
 
             $content = $_POST["content"][$lang] ?? '';
             $metaDescription = $_POST["metaDescription"][$lang] ?? '';
+            $isHidden = isset($_POST["hidden"][$lang]);
 
             if (empty($content)) {
                 continue;
             };
 
+            $frontMatter = "---\n";
+            $hasFrontMatter = false;
+
             if (!empty($metaDescription)) {
-                $frontMatter = "---\n";
                 $frontMatter .= "description: $metaDescription\n";
-                $frontMatter .= "---\n";
+                $hasFrontMatter = true;
+            }
+
+            if ($isHidden) {
+                $frontMatter .= "hidden: true\n";
+                $hasFrontMatter = true;
+            }
+
+            if ($type === 'posts') {
+                // Sync date in frontmatter if needed, but let's just write what we have
+                // Or just keep it simple. If we want to support date in frontmatter, we should write it.
+                // The requirement was: "l'attributo hidden deve essere impostabile anche da admin"
+                // And "tutti gli articoli con data futura devono esssere ignorati".
+                // We should probably explicitly write the date to frontmatter to support future scheduling easily regardless of filename.
+                $frontMatter .= "date: $date\n";
+                $hasFrontMatter = true;
+            }
+
+            $frontMatter .= "---\n";
+
+            if ($hasFrontMatter) {
                 $content = $frontMatter . $content;
             }
 

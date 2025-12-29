@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 class Microblo
 {
@@ -28,9 +31,9 @@ class Microblo
         $this->router = new Router($_GET, $_COOKIE);
         $this->parser = new PostParser();
 
-        $this->pathContent = __DIR__ . '/../content';
-        $this->pathCache = __DIR__ . '/../cache';
-        $this->pathTemplates = __DIR__ . '/../template';
+        $this->pathContent = $config['path_content'] ?? __DIR__ . '/../content';
+        $this->pathCache = $config['path_cache'] ?? __DIR__ . '/../cache';
+        $this->pathTemplates = $config['path_templates'] ?? __DIR__ . '/../template';
 
         $this->cache = new Cache($this->pathCache, $config['cache_ttl'] ?? 3600);
 
@@ -105,6 +108,19 @@ class Microblo
         $file = $this->findContentFile('posts', $slug, $lang);
         if ($file) {
             $post = $this->parser->parse($file);
+
+            // Check for hidden
+            if (isset($post['hidden']) && $post['hidden'] === true) {
+                $this->render404();
+                return;
+            }
+
+            // Check for future date
+            if (isset($post['date']) && $post['date'] > date('Y-m-d')) {
+                $this->render404();
+                return;
+            }
+
             $this->currentItem = $post;
             $this->renderTemplate('single', ['post' => $post, 'lang' => $lang]);
         } else {
@@ -117,6 +133,13 @@ class Microblo
         $file = $this->findContentFile('pages', $slug, $lang);
         if ($file) {
             $page = $this->parser->parse($file);
+
+            // Check for hidden
+            if (isset($page['hidden']) && $page['hidden'] === true) {
+                $this->render404();
+                return;
+            }
+
             $this->currentItem = $page;
             $this->renderTemplate('page', ['page' => $page, 'lang' => $lang]);
         } else {
@@ -162,12 +185,22 @@ class Microblo
         $files = glob($pattern);
         rsort($files);
 
-        $offset = ($page - 1) * $limit;
-        $files = array_slice($files, $offset, $limit);
-
         $posts = [];
+        $currentDate = date('Y-m-d');
+
         foreach ($files as $file) {
             $data = $this->parser->parse($file);
+
+            // Filter hidden posts
+            if (!empty($data['hidden']) && $data['hidden'] === true) {
+                continue;
+            }
+
+            // Filter future posts
+            $postDate = $data['date'] ?? null;
+            if ($postDate && $postDate > $currentDate) {
+                continue;
+            }
 
             // Filename: yyyy-mm-dd-slug-lang.md
             $basename = basename($file, '.md');
@@ -192,6 +225,10 @@ class Microblo
 
             $posts[] = $data;
         }
+
+        // Manual pagination after filtering
+        $offset = ($page - 1) * $limit;
+        $posts = array_slice($posts, $offset, $limit);
 
         $this->cache->set($cacheKey, serialize($posts));
         return $posts;

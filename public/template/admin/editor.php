@@ -78,6 +78,12 @@
 
             <?php foreach ($languages as $i => $lang): ?>
                 <div id="tab-<?= $lang ?>" class="tab <?= $i === 0 ? 'active' : '' ?>">
+                    <?php if ($type === 'posts'): ?>
+                        <label>
+                            <input type="checkbox" name="hidden[<?= $lang ?>]" <?= !empty($hidden[$lang]) ? 'checked' : '' ?>> Hidden (hide from lists)
+                        </label>
+                    <?php endif; ?>
+
                     <label>Content Markdown [<?= $lang ?>]:
                         <textarea name="content[<?= $lang ?>]" style="width: 100%; height: 500px; border: 1px solid var(--foreground);"><?= htmlspecialchars($content[$lang]) ?></textarea>
                     </label>

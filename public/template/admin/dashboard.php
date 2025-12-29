@@ -1,4 +1,7 @@
-<?php if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; } ?>
+<?php if (!defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+} ?>
 <!DOCTYPE html>
 <html lang="en">
 
