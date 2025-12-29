@@ -32,7 +32,10 @@ class AdminController
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
                 $this->processLogin();
             } else {
-                $this->renderView('login');
+                $this->renderView('login', [
+                    'title' => 'Admin Login - Microblo',
+                    'bodyStyle' => 'padding: 50px; max-width: 400px; margin: 0 auto;'
+                ]);
             }
             return;
         }
@@ -87,14 +90,18 @@ class AdminController
             exit;
         }
 
-        $this->renderView('login', ['error' => 'Invalid credentials']);
+        $this->renderView('login', [
+            'error' => 'Invalid credentials',
+            'title' => 'Admin Login - Microblo',
+            'bodyStyle' => 'padding: 50px; max-width: 400px; margin: 0 auto;'
+        ]);
     }
 
     private function dashboard(): void
     {
         $posts = $this->getGroupedContent('posts');
         $pages = $this->getGroupedContent('pages');
-        $this->renderView('dashboard', ['posts' => $posts, 'pages' => $pages]);
+        $this->renderView('dashboard', ['posts' => $posts, 'pages' => $pages, 'title' => 'Dashboard - Microblo']);
     }
 
     private function edit(): void
@@ -134,7 +141,8 @@ class AdminController
             'content' => $content,
             'languages' => $languages,
             'metaDescription' => $metaDescription,
-            'hidden' => $hidden
+            'hidden' => $hidden,
+            'title' => 'Editor - Microblo'
         ]);
     }
 
@@ -307,7 +315,7 @@ class AdminController
             ];
         }
 
-        $this->renderView('images', ['images' => $images]);
+        $this->renderView('images', ['images' => $images, 'title' => 'Images - Microblo']);
     }
 
     private function uploadImage(): void
@@ -352,6 +360,14 @@ class AdminController
     private function renderView(string $view, array $data = []): void
     {
         extract($data);
+        ob_start();
         require __DIR__ . "/../template/admin/$view.php";
+        $content = ob_get_clean();
+
+        if (file_exists(__DIR__ . "/../template/admin/layout.php")) {
+            require __DIR__ . "/../template/admin/layout.php";
+        } else {
+            echo $content;
+        }
     }
 }

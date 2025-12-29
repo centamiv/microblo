@@ -1,11 +1,9 @@
-<?php if (!defined('MICROBLO_ADMIN')) { http_response_code(403); exit; } ?>
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <title>Images - Microblo</title>
-    <link rel="stylesheet" href="template/admin/css/terminal.css">
+<?php if (!defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+} ?>
+<?php
+$extraHead = <<<'HTML'
     <style>
         .image-grid {
             display: grid;
@@ -36,77 +34,73 @@
             align-items: baseline;
         }
     </style>
-</head>
+HTML;
+?>
+<header style="display: flex; justify-content: space-between; align-items: baseline;">
+    <h1>Image Management</h1>
+    <nav>
+        <a href="admin.php?action=dashboard" class="btn btn-default">Back to Dashboard</a>
+    </nav>
+</header>
+<hr>
+<h2>Upload new image</h2>
+<form action="admin.php?action=upload_image" method="post" enctype="multipart/form-data">
+    <fieldset>
+        <input type="file" name="image" required accept="image/*">
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </fieldset>
+</form>
 
-<body style="padding: 20px; max-width: 1024px; margin: 0 auto;">
-    <header style="display: flex; justify-content: space-between; align-items: baseline;">
-        <h1>Image Management</h1>
-        <nav>
-            <a href="admin.php?action=dashboard" class="btn btn-default">Back to Dashboard</a>
-        </nav>
-    </header>
-    <hr>
-    <h2>Upload new image</h2>
-    <form action="admin.php?action=upload_image" method="post" enctype="multipart/form-data">
-        <fieldset>
-            <input type="file" name="image" required accept="image/*">
-            <button type="submit" class="btn btn-primary">Upload</button>
-        </fieldset>
-    </form>
-
-    <h2>Existing images</h2>
-    <div class="image-grid">
-        <?php foreach ($images as $img): ?>
-            <div class="image-item">
-                <img src="<?= htmlspecialchars($img['url']) ?>" alt="<?= htmlspecialchars($img['name']) ?>">
-                <div style="word-break: break-all; font-size: 0.8em; margin-bottom: 5px;"><?= htmlspecialchars($img['name']) ?></div>
-                <div class="image-actions">
-                    <button onclick="copyUrl('<?= htmlspecialchars($img['url']) ?>')" class="btn btn-small">Copy URL</button>
-                    <a href="admin.php?action=delete_image&name=<?= urlencode($img['name']) ?>" onclick="return confirm('Delete this image?')" style="color: red;">Delete</a>
-                </div>
+<h2>Existing images</h2>
+<div class="image-grid">
+    <?php foreach ($images as $img): ?>
+        <div class="image-item">
+            <img src="<?= htmlspecialchars($img['url']) ?>" alt="<?= htmlspecialchars($img['name']) ?>">
+            <div style="word-break: break-all; font-size: 0.8em; margin-bottom: 5px;"><?= htmlspecialchars($img['name']) ?></div>
+            <div class="image-actions">
+                <button onclick="copyUrl('<?= htmlspecialchars($img['url']) ?>')" class="btn btn-small">Copy URL</button>
+                <a href="admin.php?action=delete_image&name=<?= urlencode($img['name']) ?>" onclick="return confirm('Delete this image?')" style="color: red;">Delete</a>
             </div>
-        <?php endforeach; ?>
-    </div>
+        </div>
+    <?php endforeach; ?>
+</div>
 
-    <script>
-        function copyUrl(url) {
-            if (navigator.clipboard && window.isSecureContext) {
-                // Navigator clipboard api method'
-                return navigator.clipboard.writeText(url).then(() => {
-                    alert('URL copied to clipboard!');
-                }, (err) => {
-                    fallbackCopyTextToClipboard(url);
-                });
-            } else {
-                // Fallback
-                fallbackCopyTextToClipboard(url);
-            }
-        }
-
-        function fallbackCopyTextToClipboard(text) {
-            var textArea = document.createElement("textarea");
-            textArea.value = text;
-
-            // Avoid scrolling to bottom
-            textArea.style.top = "0";
-            textArea.style.left = "0";
-            textArea.style.position = "fixed";
-
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-
-            try {
-                var successful = document.execCommand('copy');
-                var msg = successful ? 'successful' : 'unsuccessful';
+<script>
+    function copyUrl(url) {
+        if (navigator.clipboard && window.isSecureContext) {
+            // Navigator clipboard api method'
+            return navigator.clipboard.writeText(url).then(() => {
                 alert('URL copied to clipboard!');
-            } catch (err) {
-                console.error('Fallback: Oops, unable to copy', err);
-            }
-
-            document.body.removeChild(textArea);
+            }, (err) => {
+                fallbackCopyTextToClipboard(url);
+            });
+        } else {
+            // Fallback
+            fallbackCopyTextToClipboard(url);
         }
-    </script>
-</body>
+    }
 
-</html>
+    function fallbackCopyTextToClipboard(text) {
+        var textArea = document.createElement("textarea");
+        textArea.value = text;
+
+        // Avoid scrolling to bottom
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            var successful = document.execCommand('copy');
+            var msg = successful ? 'successful' : 'unsuccessful';
+            alert('URL copied to clipboard!');
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+</script>
