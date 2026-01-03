@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 class Router
 {
@@ -67,6 +70,10 @@ class Router
      */
     public function getRoute(): array
     {
+        if (isset($this->queryParams['rss'])) {
+            return ['type' => 'rss'];
+        }
+
         if (!empty($this->queryParams['slug'])) {
             return ['type' => 'post', 'slug' => $this->queryParams['slug']];
         }
@@ -75,6 +82,6 @@ class Router
             return ['type' => 'page', 'slug' => $this->queryParams['page']];
         }
 
-        return ['type' => 'home', 'page_num' => (int)($this->queryParams['p'] ?? 1)];
+        return ['type' => 'home', 'page_num' => (int) ($this->queryParams['p'] ?? 1)];
     }
 }
