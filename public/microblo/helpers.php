@@ -120,6 +120,7 @@ function mb_link(string $type, ?string $slug = null): string
         'home' => 'index.php',
         'post' => 'index.php?slug=' . urlencode($slug),
         'page' => 'index.php?page=' . urlencode($slug),
+        'rss' => 'index.php?rss&lang=' . mb_current_language(),
         default => '#'
     };
 }
@@ -133,7 +134,7 @@ function mb_link(string $type, ?string $slug = null): string
 function mb_post_title(?array $post = null): string
 {
     $post = $post ?? Microblo::instance()->getCurrentItem();
-    return htmlspecialchars($post['title'] ?? 'Untitled');
+    return htmlspecialchars($post['title'] ?? '');
 }
 
 /**

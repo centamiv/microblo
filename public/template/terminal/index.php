@@ -1,4 +1,7 @@
-<?php if (!defined('MICROBLO_APP')) { http_response_code(403); exit; } ?>
+<?php if (!defined('MICROBLO_APP')) {
+    http_response_code(403);
+    exit;
+} ?>
 <?php if (mb_site_description()): ?>
     <p>
         <?= mb_site_description() ?>
@@ -21,12 +24,13 @@
             <?php foreach (mb_posts() as $post): ?>
                 <tr>
                     <td style="white-space: nowrap;"><?= mb_post_date($post) ?? '-' ?></td>
-                    <td style="width: 100%;"><a href="<?= mb_link('post', mb_post_slug($post)) ?>"><?= mb_post_title($post) ?></a></td>
+                    <td style="width: 100%;"><a
+                            href="<?= mb_link('post', mb_post_slug($post)) ?>"><?= mb_post_title($post) ?></a></td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
-    <div class="pagination" style="display: flex; justify-content: space-between; margin-top: 20px;">
+    <div class="space-between" style="margin-top: 20px;">
         <?php $paging = mb_pagination(); ?>
         <div>
             <?php if ($paging['prev']): ?>
