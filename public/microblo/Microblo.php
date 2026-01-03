@@ -1,5 +1,8 @@
 <?php
-if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) { http_response_code(403); exit; }
+if (!defined('MICROBLO_APP') && !defined('MICROBLO_ADMIN')) {
+    http_response_code(403);
+    exit;
+}
 
 class Microblo
 {
@@ -28,9 +31,9 @@ class Microblo
         $this->router = new Router($_GET, $_COOKIE);
         $this->parser = new PostParser();
 
-        $this->pathContent = __DIR__ . '/../content';
-        $this->pathCache = __DIR__ . '/../cache';
-        $this->pathTemplates = __DIR__ . '/../template';
+        $this->pathContent = $config['path_content'] ?? __DIR__ . '/../content';
+        $this->pathCache = $config['path_cache'] ?? __DIR__ . '/../cache';
+        $this->pathTemplates = $config['path_templates'] ?? __DIR__ . '/../template';
 
         $this->cache = new Cache($this->pathCache, $config['cache_ttl'] ?? 3600);
 
@@ -69,6 +72,9 @@ class Microblo
         ];
 
         switch ($route['type']) {
+            case 'rss':
+                $this->renderRss($lang);
+                return;
             case 'post':
                 $this->renderPost($route['slug'], $lang);
                 break;
@@ -100,11 +106,79 @@ class Microblo
         return "{$prefix}_{$id}_{$suffix}";
     }
 
+    private function renderRss(string $lang): void
+    {
+        // Construct base URL from server variables if not in config
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $path = dirname($_SERVER['PHP_SELF']);
+        // Ensure path starts with slash and doesn't end with slash if it's just /
+        $baseUrl = rtrim("$protocol://$host$path", '/');
+        // Handle case where path is just \ or /
+        if ($baseUrl === "$protocol://$host\\") {
+            $baseUrl = "$protocol://$host";
+        }
+
+        // Allow config override
+        if (!empty($this->config['site_url'])) {
+            $baseUrl = rtrim($this->config['site_url'], '/');
+        }
+
+        $siteName = $this->config['site_name'] ?? 'Microblo';
+        $siteDesc = $this->config['site_description'] ?? '';
+        $channelLink = "$baseUrl/index.php?lang=$lang";
+
+        $posts = $this->getRecentPosts(20, 1, $lang);
+
+        header('Content-Type: application/rss+xml; charset=utf-8');
+        echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+        echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">' . "\n";
+        echo '<channel>' . "\n";
+        echo '<title>' . htmlspecialchars($siteName) . '</title>' . "\n";
+        echo '<link>' . htmlspecialchars($channelLink) . '</link>' . "\n";
+        echo '<description>' . htmlspecialchars($siteDesc) . '</description>' . "\n";
+        echo '<language>' . $lang . '</language>' . "\n";
+        echo '<atom:link href="' . htmlspecialchars("$baseUrl/index.php?rss&lang=$lang") . '" rel="self" type="application/rss+xml" />' . "\n";
+
+        foreach ($posts as $post) {
+            $title = $post['title'];
+            $slug = $post['slug'];
+            $link = "$baseUrl/index.php?slug=" . urlencode($slug) . "&amp;lang=$lang";
+            $desc = $post['description'];
+            $dateTimestamp = strtotime($post['date']);
+            $date = date(DATE_RSS, $dateTimestamp);
+
+            echo '<item>' . "\n";
+            echo '<title>' . htmlspecialchars($title) . '</title>' . "\n";
+            echo '<link>' . htmlspecialchars($link) . '</link>' . "\n";
+            echo '<guid>' . htmlspecialchars($link) . '</guid>' . "\n";
+            echo '<description>' . htmlspecialchars($desc) . '</description>' . "\n";
+            echo '<pubDate>' . $date . '</pubDate>' . "\n";
+            echo '</item>' . "\n";
+        }
+
+        echo '</channel>' . "\n";
+        echo '</rss>';
+    }
+
     private function renderPost(string $slug, string $lang): void
     {
         $file = $this->findContentFile('posts', $slug, $lang);
         if ($file) {
             $post = $this->parser->parse($file);
+
+            // Check for hidden
+            if (isset($post['hidden']) && $post['hidden'] === true) {
+                $this->render404();
+                return;
+            }
+
+            // Check for future date
+            if (isset($post['date']) && $post['date'] > date('Y-m-d')) {
+                $this->render404();
+                return;
+            }
+
             $this->currentItem = $post;
             $this->renderTemplate('single', ['post' => $post, 'lang' => $lang]);
         } else {
@@ -117,6 +191,13 @@ class Microblo
         $file = $this->findContentFile('pages', $slug, $lang);
         if ($file) {
             $page = $this->parser->parse($file);
+
+            // Check for hidden
+            if (isset($page['hidden']) && $page['hidden'] === true) {
+                $this->render404();
+                return;
+            }
+
             $this->currentItem = $page;
             $this->renderTemplate('page', ['page' => $page, 'lang' => $lang]);
         } else {
@@ -162,12 +243,22 @@ class Microblo
         $files = glob($pattern);
         rsort($files);
 
-        $offset = ($page - 1) * $limit;
-        $files = array_slice($files, $offset, $limit);
-
         $posts = [];
+        $currentDate = date('Y-m-d');
+
         foreach ($files as $file) {
             $data = $this->parser->parse($file);
+
+            // Filter hidden posts
+            if (!empty($data['hidden']) && $data['hidden'] === true) {
+                continue;
+            }
+
+            // Filter future posts
+            $postDate = $data['date'] ?? null;
+            if ($postDate && $postDate > $currentDate) {
+                continue;
+            }
 
             // Filename: yyyy-mm-dd-slug-lang.md
             $basename = basename($file, '.md');
@@ -193,6 +284,10 @@ class Microblo
             $posts[] = $data;
         }
 
+        // Manual pagination after filtering
+        $offset = ($page - 1) * $limit;
+        $posts = array_slice($posts, $offset, $limit);
+
         $this->cache->set($cacheKey, serialize($posts));
         return $posts;
     }
@@ -208,7 +303,7 @@ class Microblo
         $cacheKey = "count_posts_{$lang}";
         $cached = $this->cache->get($cacheKey);
         if ($cached !== null) {
-            return (int)$cached;
+            return (int) $cached;
         }
 
         $dir = $this->pathContent . '/posts';
@@ -216,7 +311,7 @@ class Microblo
         $files = glob($pattern);
         $count = count($files);
 
-        $this->cache->set($cacheKey, (string)$count);
+        $this->cache->set($cacheKey, (string) $count);
         return $count;
     }
 
@@ -240,7 +335,7 @@ class Microblo
         foreach ($files as $file) {
             $data = $this->parser->parse($file);
             $basename = basename($file, '.md');
-            $slug = substr($basename, 0, - (strlen($lang) + 1));
+            $slug = substr($basename, 0, -(strlen($lang) + 1));
 
             $pages[] = [
                 'slug' => $slug,
@@ -261,7 +356,8 @@ class Microblo
     private function findContentFile(string $type, string $slug, string $lang): ?string
     {
         $dir = $this->pathContent . '/' . $type;
-        if (!is_dir($dir)) return null;
+        if (!is_dir($dir))
+            return null;
 
         $pattern = ($type === 'posts')
             ? $dir . "/*-$slug-$lang.md"

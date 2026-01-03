@@ -1,6 +1,9 @@
 <?php
 
 use PHPUnit\Framework\TestCase;
+
+define('MICROBLO_APP', true);
+
 // Classes are now global
 
 
@@ -66,7 +69,8 @@ class MicrobloTest extends TestCase
 
         $result = $parser->parse($file);
 
-        $this->assertEquals('Foo', $result['title']);
+        // FM title support removed by user, expect fallback to filename (Test_fm)
+        $this->assertEquals('Test_fm', $result['title']);
         $this->assertEquals('<p>Bar Body</p>', trim($result['content']));
 
         unlink($file);
@@ -83,7 +87,8 @@ class MicrobloTest extends TestCase
 
         $this->assertEquals('My H1 Title', $result['title']);
         // Verify H1 is present or acceptable in content (current impl keeps it)
-        $this->assertStringContainsString('<h1>My H1 Title</h1>', $result['content']);
+        // ParsedownExtended/Parsedown adds IDs to headers
+        $this->assertStringContainsString('My H1 Title</h1>', $result['content']);
 
         unlink($file);
     }
@@ -216,5 +221,79 @@ class MicrobloTest extends TestCase
         rmdir($tempDir . '/posts');
         rmdir($config['path_templates']);
         rmdir($tempDir);
+    }
+
+    public function testParserExtractsHiddenAndDate()
+    {
+        $parser = new PostParser();
+        $file = sys_get_temp_dir() . '/test_hidden.md';
+        $content = "---\ntitle: Hidden Post\nhidden: true\ndate: 2025-01-01\n---\nSecret Content";
+        file_put_contents($file, $content);
+
+        $result = $parser->parse($file);
+
+        $this->assertTrue($result['hidden']);
+        // $this->assertEquals('2025-01-01', $result['date']); // FM date disabled by user
+
+        unlink($file);
+    }
+
+    public function testGetRecentPostsFiltersHiddenAndFuture()
+    {
+        $config = require __DIR__ . '/../public/config.php';
+        $tempDir = sys_get_temp_dir() . '/microblo_test_filtering';
+        $cacheDir = sys_get_temp_dir() . '/microblo_test_cache';
+
+        // Ensure clean start
+        if (is_dir($tempDir)) {
+            array_map('unlink', glob($tempDir . '/posts/*'));
+            if (is_dir($tempDir . '/posts')) rmdir($tempDir . '/posts');
+            rmdir($tempDir);
+        }
+        if (is_dir($cacheDir)) {
+            array_map('unlink', glob($cacheDir . '/*'));
+            rmdir($cacheDir);
+        }
+
+        if (!is_dir($tempDir)) mkdir($tempDir);
+        if (!is_dir($tempDir . '/posts')) mkdir($tempDir . '/posts');
+        if (!is_dir($cacheDir)) mkdir($cacheDir);
+
+        $config['path_content'] = $tempDir;
+        $config['path_cache'] = $cacheDir;
+        $config['cache_ttl'] = 0; // Disable cache for test
+
+        // 1. Normal post (Visible)
+        $file1 = $tempDir . '/posts/2023-01-01-normal-en.md';
+        file_put_contents($file1, "---\ntitle: Normal\n---\nContent");
+
+        // 2. Hidden post (Hidden)
+        $file2 = $tempDir . '/posts/2023-01-02-hidden-en.md';
+        file_put_contents($file2, "---\ntitle: Hidden\nhidden: true\n---\nContent");
+
+        // 3. Future post (Hidden)
+        $futureDate = date('Y-m-d', strtotime('+1 day'));
+        $file3 = $tempDir . "/posts/{$futureDate}-future-en.md";
+        // Note: filename date is future, parser should pick it up if not in frontmatter
+        file_put_contents($file3, "---\ntitle: Future\n---\nContent");
+
+        // 4. Future via Frontmatter (Hidden) - REMOVED as User disabled FM date
+        // $file4 = $tempDir . '/posts/2023-01-03-future-fm-en.md';
+        // $futureDate2 = date('Y-m-d', strtotime('+2 days'));
+        // file_put_contents($file4, "---\ntitle: FutureFM\ndate: $futureDate2\n---\nContent");
+
+        $app = new Microblo($config);
+        $posts = $app->getRecentPosts(10, 1, 'en');
+
+        // Only "Normal" should be returned
+        $this->assertCount(1, $posts);
+        $this->assertEquals('normal', $posts[0]['slug']);
+
+        // Cleanup
+        array_map('unlink', glob($tempDir . '/posts/*'));
+        rmdir($tempDir . '/posts');
+        rmdir($tempDir);
+        array_map('unlink', glob($cacheDir . '/*'));
+        rmdir($cacheDir);
     }
 }

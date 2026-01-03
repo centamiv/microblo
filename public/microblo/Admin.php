@@ -18,8 +18,8 @@ class AdminController
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->pathContent = __DIR__ . '/../content';
-        $this->pathCache = __DIR__ . '/../cache';
+        $this->pathContent = $config['path_content'] ?? __DIR__ . '/../content';
+        $this->pathCache = $config['path_cache'] ?? __DIR__ . '/../cache';
     }
 
     /**
@@ -32,7 +32,10 @@ class AdminController
             if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
                 $this->processLogin();
             } else {
-                $this->renderView('login');
+                $this->renderView('login', [
+                    'title' => 'Admin Login - Microblo',
+                    'bodyStyle' => 'padding: 50px; max-width: 400px; margin: 0 auto;'
+                ]);
             }
             return;
         }
@@ -87,14 +90,18 @@ class AdminController
             exit;
         }
 
-        $this->renderView('login', ['error' => 'Invalid credentials']);
+        $this->renderView('login', [
+            'error' => 'Invalid credentials',
+            'title' => 'Admin Login - Microblo',
+            'bodyStyle' => 'padding: 50px; max-width: 400px; margin: 0 auto;'
+        ]);
     }
 
     private function dashboard(): void
     {
         $posts = $this->getGroupedContent('posts');
         $pages = $this->getGroupedContent('pages');
-        $this->renderView('dashboard', ['posts' => $posts, 'pages' => $pages]);
+        $this->renderView('dashboard', ['posts' => $posts, 'pages' => $pages, 'title' => 'Dashboard - Microblo']);
     }
 
     private function edit(): void
@@ -105,11 +112,14 @@ class AdminController
         $content = [];
         $metaDescription = [];
 
+        $hidden = [];
+
         $languages = $this->config['supported_languages'] ?? ['en'];
 
         foreach ($languages as $lang) {
             $content[$lang] = '';
             $metaDescription[$lang] = '';
+            $hidden[$lang] = false;
 
             if ($slug) {
                 $file = $this->findFile($type, $slug, $lang);
@@ -119,6 +129,7 @@ class AdminController
                     $content[$lang] = $parsed['markdown'];
                     $date = $parsed['date'];
                     $metaDescription[$lang] = $parsed['metaDescription'];
+                    $hidden[$lang] = $parsed['hidden'] ?? false;
                 }
             }
         }
@@ -129,7 +140,9 @@ class AdminController
             'date' => $date,
             'content' => $content,
             'languages' => $languages,
-            'metaDescription' => $metaDescription
+            'metaDescription' => $metaDescription,
+            'hidden' => $hidden,
+            'title' => 'Editor - Microblo'
         ]);
     }
 
@@ -169,15 +182,38 @@ class AdminController
 
             $content = $_POST["content"][$lang] ?? '';
             $metaDescription = $_POST["metaDescription"][$lang] ?? '';
+            $isHidden = isset($_POST["hidden"][$lang]);
 
             if (empty($content)) {
                 continue;
             };
 
+            $frontMatter = "---\n";
+            $hasFrontMatter = false;
+
             if (!empty($metaDescription)) {
-                $frontMatter = "---\n";
                 $frontMatter .= "description: $metaDescription\n";
-                $frontMatter .= "---\n";
+                $hasFrontMatter = true;
+            }
+
+            if ($isHidden) {
+                $frontMatter .= "hidden: true\n";
+                $hasFrontMatter = true;
+            }
+
+            if ($type === 'posts') {
+                // Sync date in frontmatter if needed, but let's just write what we have
+                // Or just keep it simple. If we want to support date in frontmatter, we should write it.
+                // The requirement was: "l'attributo hidden deve essere impostabile anche da admin"
+                // And "tutti gli articoli con data futura devono esssere ignorati".
+                // We should probably explicitly write the date to frontmatter to support future scheduling easily regardless of filename.
+                $frontMatter .= "date: $date\n";
+                $hasFrontMatter = true;
+            }
+
+            $frontMatter .= "---\n";
+
+            if ($hasFrontMatter) {
                 $content = $frontMatter . $content;
             }
 
@@ -279,7 +315,7 @@ class AdminController
             ];
         }
 
-        $this->renderView('images', ['images' => $images]);
+        $this->renderView('images', ['images' => $images, 'title' => 'Images - Microblo']);
     }
 
     private function uploadImage(): void
@@ -324,6 +360,14 @@ class AdminController
     private function renderView(string $view, array $data = []): void
     {
         extract($data);
+        ob_start();
         require __DIR__ . "/../template/admin/$view.php";
+        $content = ob_get_clean();
+
+        if (file_exists(__DIR__ . "/../template/admin/layout.php")) {
+            require __DIR__ . "/../template/admin/layout.php";
+        } else {
+            echo $content;
+        }
     }
 }

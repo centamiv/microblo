@@ -23,6 +23,7 @@ class PostParser
         $title = null;
         $body = $content;
         $metaDescription = '';
+        $metaHidden = false;
 
         // Extract Front Matter
         $pattern = '/^---\s*\n(.*?)\n---\s*\n(.*)$/s';
@@ -32,6 +33,9 @@ class PostParser
             $meta = $this->parseYamlSimple($frontMatterRaw);
             if (!empty($meta['description'])) {
                 $metaDescription = $meta['description'];
+            }
+            if (!empty($meta['hidden'])) {
+                $metaHidden = filter_var($meta['hidden'], FILTER_VALIDATE_BOOLEAN);
             }
         }
 
@@ -83,6 +87,7 @@ class PostParser
             'content' => $htmlContent,
             'markdown' => $body,
             'date' => $date,
+            'hidden' => $metaHidden,
             'metaDescription' => $metaDescription
         ];
     }
