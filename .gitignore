@@ -4,7 +4,7 @@ Thumbs.db
 desktop.ini
 
 # PHP & Composer
-/vendor/
+vendor/
 *.log
 composer.phar
 .phpunit.result.cache
@@ -16,16 +16,18 @@ composer.phar
 *.swo
 
 # Project Variable Content (Preserve directory structure if .gitkeep exists)
-/public/cache/*
-!/public/cache/.gitkeep
+public/cache/*
+!public/cache/.gitkeep
 
-/public/content/images/*
-!/public/content/images/.gitkeep
+public/content/images/*
+!public/content/images/.gitkeep
 
-/public/content/pages/*
-!/public/content/pages/.gitkeep
+public/content/pages/*
+!public/content/pages/.gitkeep
 
-/public/content/posts/*
-!/public/content/posts/.gitkeep
+public/content/posts/*
+!public/content/posts/.gitkeep
 
 config.php
+
+cache/

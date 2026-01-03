@@ -31,6 +31,11 @@ If you prefer a UI, navigate to `/admin.php` to log in. You can upload images an
 ### Performance
 Because Microblo uses standard PHP and file caching, it allows for high traffic with minimal resources. The "Old School" approach means less overhead and fewer things that can break.
 
+### RSS Feed
+Microblo generates an automatic RSS feed for your posts.
+*   **Default Feed:** `index.php?rss`
+*   **Language Specific:** `index.php?rss&lang=it`
+
 ## Themes
 
 *   **Terminal**: A retro, hacker-style theme (default).

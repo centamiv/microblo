@@ -72,6 +72,9 @@ class Microblo
         ];
 
         switch ($route['type']) {
+            case 'rss':
+                $this->renderRss($lang);
+                return;
             case 'post':
                 $this->renderPost($route['slug'], $lang);
                 break;
@@ -101,6 +104,61 @@ class Microblo
             default => 'unknown'
         };
         return "{$prefix}_{$id}_{$suffix}";
+    }
+
+    private function renderRss(string $lang): void
+    {
+        // Construct base URL from server variables if not in config
+        $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $path = dirname($_SERVER['PHP_SELF']);
+        // Ensure path starts with slash and doesn't end with slash if it's just /
+        $baseUrl = rtrim("$protocol://$host$path", '/');
+        // Handle case where path is just \ or /
+        if ($baseUrl === "$protocol://$host\\") {
+            $baseUrl = "$protocol://$host";
+        }
+
+        // Allow config override
+        if (!empty($this->config['site_url'])) {
+            $baseUrl = rtrim($this->config['site_url'], '/');
+        }
+
+        $siteName = $this->config['site_name'] ?? 'Microblo';
+        $siteDesc = $this->config['site_description'] ?? '';
+        $channelLink = "$baseUrl/index.php?lang=$lang";
+
+        $posts = $this->getRecentPosts(20, 1, $lang);
+
+        header('Content-Type: application/rss+xml; charset=utf-8');
+        echo '<?xml version="1.0" encoding="UTF-8" ?>' . "\n";
+        echo '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">' . "\n";
+        echo '<channel>' . "\n";
+        echo '<title>' . htmlspecialchars($siteName) . '</title>' . "\n";
+        echo '<link>' . htmlspecialchars($channelLink) . '</link>' . "\n";
+        echo '<description>' . htmlspecialchars($siteDesc) . '</description>' . "\n";
+        echo '<language>' . $lang . '</language>' . "\n";
+        echo '<atom:link href="' . htmlspecialchars("$baseUrl/index.php?rss&lang=$lang") . '" rel="self" type="application/rss+xml" />' . "\n";
+
+        foreach ($posts as $post) {
+            $title = $post['title'];
+            $slug = $post['slug'];
+            $link = "$baseUrl/index.php?slug=" . urlencode($slug) . "&amp;lang=$lang";
+            $desc = $post['description'];
+            $dateTimestamp = strtotime($post['date']);
+            $date = date(DATE_RSS, $dateTimestamp);
+
+            echo '<item>' . "\n";
+            echo '<title>' . htmlspecialchars($title) . '</title>' . "\n";
+            echo '<link>' . htmlspecialchars($link) . '</link>' . "\n";
+            echo '<guid>' . htmlspecialchars($link) . '</guid>' . "\n";
+            echo '<description>' . htmlspecialchars($desc) . '</description>' . "\n";
+            echo '<pubDate>' . $date . '</pubDate>' . "\n";
+            echo '</item>' . "\n";
+        }
+
+        echo '</channel>' . "\n";
+        echo '</rss>';
     }
 
     private function renderPost(string $slug, string $lang): void
@@ -245,7 +303,7 @@ class Microblo
         $cacheKey = "count_posts_{$lang}";
         $cached = $this->cache->get($cacheKey);
         if ($cached !== null) {
-            return (int)$cached;
+            return (int) $cached;
         }
 
         $dir = $this->pathContent . '/posts';
@@ -253,7 +311,7 @@ class Microblo
         $files = glob($pattern);
         $count = count($files);
 
-        $this->cache->set($cacheKey, (string)$count);
+        $this->cache->set($cacheKey, (string) $count);
         return $count;
     }
 
@@ -277,7 +335,7 @@ class Microblo
         foreach ($files as $file) {
             $data = $this->parser->parse($file);
             $basename = basename($file, '.md');
-            $slug = substr($basename, 0, - (strlen($lang) + 1));
+            $slug = substr($basename, 0, -(strlen($lang) + 1));
 
             $pages[] = [
                 'slug' => $slug,
@@ -298,7 +356,8 @@ class Microblo
     private function findContentFile(string $type, string $slug, string $lang): ?string
     {
         $dir = $this->pathContent . '/' . $type;
-        if (!is_dir($dir)) return null;
+        if (!is_dir($dir))
+            return null;
 
         $pattern = ($type === 'posts')
             ? $dir . "/*-$slug-$lang.md"
